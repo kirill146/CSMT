@@ -1,8 +1,8 @@
 import java.util.ArrayList;
 
 public class Proof {
-    int key;
-    ArrayList<ProofItem> proof;
+    private int key;
+    private ArrayList<ProofItem> proof;
 
     Proof(int key, ArrayList<ProofItem> proof) {
         this.key = key;

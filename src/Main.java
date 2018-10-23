@@ -1,11 +1,8 @@
-import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 public class Main {
 
-    public static void getProofAndCheck(CSMT csmt, int k) {
+    private static void getProofAndCheck(CSMT csmt, int k) {
         System.out.println("Test " + k);
         String data = null;
         try {
@@ -14,24 +11,37 @@ public class Main {
             // data == null
         }
         System.out.println("data == " + data);
-        ArrayList<Proof> proof = csmt.getProof(k);
-        if (proof.size() != 1 && proof.size() != 2) {
+        ArrayList<Proof> proofs = csmt.getProof(k);
+        if (proofs.size() != 1 && proofs.size() != 2) {
             throw new RuntimeException("Unexpected proof format");
         }
-        if (CSMT.verifyProof(data, proof, csmt.getRootHash())) {
-            System.out.print("Correct ");
+        if (proofs.size() == 1) {
+            if (CSMT.verifyMembershipProof(csmt.getRootHash(), k, data, proofs.get(0))) {
+                System.out.println("Correct membership proof");
+            } else {
+                System.out.println("Incorrect membership proof");
+            }
         } else {
-            System.out.print("Incorrect ");
-        }
-        if (proof.size() == 1) {
-            System.out.println("membership proof");
-        } else { // proof.size() == 2
-            System.out.println("non membership proof");
+            Proof proof1 = proofs.get(0);
+            Proof proof2 = proofs.get(1);
+            String data1 = null;
+            String data2 = null;
+            try {
+                data1 = (proof1 == null ? null : csmt.getData(proof1.getKey()));
+                data2 = (proof2 == null ? null : csmt.getData(proof2.getKey()));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            if (CSMT.verifyNonMembershipProof(csmt.getRootHash(), k, data1, data2, proofs)) {
+                System.out.println("Correct non membership proof");
+            } else {
+                System.out.println("Incorrect non membership proof");
+            }
         }
         System.out.println("------------------------");
     }
 
-    public static void main(String[] args) throws Exception { // todo: handle exception
+    private static void test1() throws KeyExistsException {
         CSMT csmt = new CSMT();
         csmt.insert(7, "C");
         csmt.insert(3, "B");
@@ -40,5 +50,18 @@ public class Main {
         for (int k = 0; k < 10; k++) {
             getProofAndCheck(csmt, k);
         }
+    }
+
+    public static void test2() throws KeyExistsException {
+        CSMT csmt = new CSMT();
+        csmt.insert(1, "1");
+        csmt.insert(2, "2");
+        csmt.insert(3, "3");
+        csmt.insert(4, "4");
+        csmt.printTree();
+    }
+
+    public static void main(String[] args) throws Exception { // todo: handle exception
+        test1();
     }
 }

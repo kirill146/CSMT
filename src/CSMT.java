@@ -1,12 +1,9 @@
 import javafx.util.Pair;
 
-import javax.xml.soap.Node;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.concurrent.ExecutorService;
 
 public class CSMT {
     private NodeBase root;
@@ -19,11 +16,11 @@ public class CSMT {
         return log2(x ^ y);
     }
 
-    public void insert(int key, String val) throws Exception {
+    public void insert(int key, String val) throws KeyExistsException {
         root = insert(root, key, val);
     }
 
-    private NodeBase insert(NodeBase rootNode, int key, String val) throws Exception {
+    private NodeBase insert(NodeBase rootNode, int key, String val) throws KeyExistsException {
         if (rootNode == null) {
             return new LeafNode(key, val);
         }
@@ -55,7 +52,7 @@ public class CSMT {
         LeafNode newLeaf = new LeafNode(key, val);
 
         if (key == rootNode.getKey()) {
-            throw new Exception("Key exists"); // todo: appropriate exception (and in the function declaration)
+            throw new KeyExistsException();
         } else if (key > rootNode.getKey()) {
             return new InnerNode(rootNode, newLeaf);
         }
@@ -63,16 +60,16 @@ public class CSMT {
         return new InnerNode(newLeaf, rootNode);
     }
 
-    public void delete(int k) throws Exception {
+    public void delete(int k) {
         root = delete(root, k);
     }
 
-    private NodeBase delete(NodeBase rootNode, int k) throws Exception {
+    private NodeBase delete(NodeBase rootNode, int k) {
         if (rootNode instanceof LeafNode) {
             if (rootNode.getKey() == k) {
                 return null;
             }
-            throw new Exception("Key does not exists"); // todo: appropriate exception
+            return rootNode; // Key does not exists
         }
         InnerNode root = (InnerNode) rootNode;
         if (root.getLeft() instanceof LeafNode && root.getLeft().getKey() == k) {
@@ -85,7 +82,8 @@ public class CSMT {
         int rDist = distance(k, root.getRight().getKey());
 
         if (lDist == rDist) {
-            throw new Exception("Key does not exists"); // todo: appropriate exception
+            // Key does not exists
+            return rootNode;
         }
         if (lDist < rDist) {
             root.setLeft(delete(root.getLeft(), k));
@@ -237,18 +235,86 @@ public class CSMT {
         return hash(a);
     }
 
-    public static boolean verifyMembershipProof(String data, Proof proof, byte[] rootHash) {
+    public static boolean verifyMembershipProof(byte[] rootHash, int key, String data, Proof proof) {
+        if (key != proof.getKey()) {
+            return false;
+        }
         byte[] curHash = hash(data);
         for (ProofItem item : proof.getProof()) {
             if (item.getDirection() == 'l') {
                 curHash = combinedHash(item.getHash(), curHash);
             } else if (item.getDirection() == 'r') {
                 curHash = combinedHash(curHash, item.getHash());
-            } else {
+            } else { // unexpected direction character (neither 'l' nor 'r')
                 return false;
             }
         }
         return Arrays.equals(curHash, rootHash);
+    }
+
+    public static boolean verifyNonMembershipProof(byte[] rootHash, int key, String data1, String data2, ArrayList<Proof> proofs) {
+        if (proofs.size() != 2) {
+            return false;
+        }
+        Proof proof1 = proofs.get(0);
+        Proof proof2 = proofs.get(1);
+
+        if (proof1 != null) {
+            if (!verifyMembershipProof(rootHash, proof1.getKey(), data1, proof1)) {
+                return false;
+            }
+        }
+        if (proof2 != null) {
+            if (!verifyMembershipProof(rootHash, proof2.getKey(), data2, proof2)) {
+                return false;
+            }
+        }
+        if (proof1 == null) {
+            if (proof2 == null || key >= proof2.getKey()) {
+                return false;
+            }
+            // the most left element
+            for (ProofItem item : proof2.getProof()) {
+                if (item.getDirection() != 'r') {
+                    return false;
+                }
+            }
+            return true;
+        }
+        if (proof2 == null) {
+            if (key <= proof1.getKey()) {
+                return false;
+            }
+            // the most right element
+            for (ProofItem item : proof1.getProof()) {
+                if (item.getDirection() != 'l') {
+                    return false;
+                }
+            }
+            return true;
+        }
+        if (key <= proof1.getKey() || key >= proof2.getKey()) {
+            return false;
+        }
+        int posR = 0;
+        while (posR < proof1.getProof().size() && proof1.getProof().get(posR).getDirection() != 'r') {
+            posR++;
+        }
+        int posL = 0;
+        while (posL < proof2.getProof().size() && proof2.getProof().get(posL).getDirection() != 'l') {
+            posL++;
+        }
+        if (posR == proof1.getProof().size()
+                || posL == proof2.getProof().size()
+                || proof1.getProof().size() - posR != proof2.getProof().size() - posL) {
+            return false;
+        }
+        for (int i = 1; i < proof1.getProof().size() - posR; i++) {
+            if (!Arrays.equals(proof1.getProof().get(posR + i).getHash(), proof2.getProof().get(posL + i).getHash())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public byte[] getRootHash() {
@@ -257,32 +323,16 @@ public class CSMT {
         return res;
     }
 
-    public static boolean verifyProof(String data, ArrayList<Proof> proof, byte[] rootHash) {
-        if (proof.size() == 1) { // membership proof
-            return verifyMembershipProof(data, proof.get(0), rootHash);
-        } else if (proof.size() == 2) { // non membership proof
-            if (proof.get(0) != null && !verifyMembershipProof(data, proof.get(0), rootHash)) {
-                return false;
-            }
-            if (proof.get(1) != null && !verifyMembershipProof(data, proof.get(1), rootHash)) {
-                return false;
-            }
-            return true; // todo
-        } else {
-            return false;
-        }
-    }
-
-    public String getData(int k) throws Exception {
+    public String getData(int k) {
         return getData(root, k);
     }
 
-    private String getData(NodeBase rootNode, int k) throws Exception {
+    private String getData(NodeBase rootNode, int k) {
         if (rootNode instanceof LeafNode) {
             if (rootNode.getKey() == k) {
                 return ((LeafNode) rootNode).getValue();
             }
-            throw new Exception("Key does not exists"); // todo: appropriate exception
+            return null; // Key does not exists
         }
 
         InnerNode root = (InnerNode) rootNode;
@@ -290,7 +340,7 @@ public class CSMT {
         int rDist = distance(k, root.getRight().getKey());
 
         if (lDist == rDist) {
-            throw new Exception("Key does not exists"); // todo: appropriate exception
+            return null; // Key does not exists
         }
         if (lDist < rDist) {
             return getData(root.getLeft(), k);
