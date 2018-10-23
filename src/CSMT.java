@@ -146,36 +146,30 @@ public class CSMT {
                 return new Pair<>(k, k);
             } else {
                 // non membership proof
-                return getNonMembershipBoundKeys(k, rootNode.getKey(), direction, sibling);
+                return getNonMembershipBoundKeys(k, rootNode.getKey(), direction, sibling, rootNode);
             }
         }
         InnerNode root = (InnerNode) rootNode;
-        int lDist = distance(k, root.getLeft().getKey());
-        int rDist = distance(k, root.getRight().getKey());
-        if (lDist == rDist) {
-            // non membership proof
-            return getNonMembershipBoundKeys(k, root.getKey(), direction, sibling);
-        } else {
-            Pair<Integer, Integer> res;
-            if (lDist < rDist) {
-                // going towards left child
-                res = getBoundKeys(root.getRight(), 'l', root.getLeft(), k);
-            } else { // rDist < lDist
-                // going towards right child
-                res = getBoundKeys(root.getLeft(), 'r', root.getRight(), k);
-            }
-
-            if (res.getValue() == null && direction == 'l') {
-                return new Pair<>(res.getKey(), minInSubtree(sibling));
-            }
-            if (res.getKey() == null && direction == 'r') {
-                return new Pair<>(sibling.getKey(), res.getValue());
-            }
-            return res;
+        if (root.getLeft().getKey() < k && k < minInSubtree(root.getRight())) {
+            return new Pair<>(root.getLeft().getKey(), minInSubtree(root.getRight()));
         }
+        Pair<Integer, Integer> res;
+        if (root.getLeft().getKey() < k) {
+            res = getBoundKeys(root.getLeft(), 'r', root.getRight(), k);
+        } else {
+            res = getBoundKeys(root.getRight(), 'l', root.getLeft(), k);
+        }
+
+        if (res.getValue() == null && direction == 'l') {
+            return new Pair<>(res.getKey(), minInSubtree(sibling));
+        }
+        if (res.getKey() == null && direction == 'r') {
+            return new Pair<>(sibling.getKey(), res.getValue());
+        }
+        return res;
     }
 
-    private Pair<Integer, Integer> getNonMembershipBoundKeys(int k, int key, char direction, NodeBase sibling) {
+    private Pair<Integer, Integer> getNonMembershipBoundKeys(int k, int key, char direction, NodeBase sibling, NodeBase cur) {
         if (k > key) {
             if (direction == 'l') {
                 return new Pair<>(key, minInSubtree(sibling));
@@ -185,7 +179,8 @@ public class CSMT {
         if (direction == 'l' || direction == 'x') {
             return new Pair<>(null, key);
         }
-        return new Pair<>(sibling.getKey(), key);
+        //return new Pair<>(sibling.getKey(), key);
+        return new Pair<>(sibling.getKey(), minInSubtree(cur));
     }
 
     private int minInSubtree(NodeBase root) {

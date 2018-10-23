@@ -1,15 +1,12 @@
-import java.util.ArrayList;
+import java.util.*;
+
+import static java.lang.System.exit;
 
 public class Main {
 
     private static void getProofAndCheck(CSMT csmt, int k) {
         System.out.println("Test " + k);
-        String data = null;
-        try {
-            data = csmt.getData(k);
-        } catch (Exception e) {
-            // data == null
-        }
+        String data = csmt.getData(k);
         System.out.println("data == " + data);
         ArrayList<Proof> proofs = csmt.getProof(k);
         if (proofs.size() != 1 && proofs.size() != 2) {
@@ -61,7 +58,43 @@ public class Main {
         csmt.printTree();
     }
 
+    private static void test3() throws KeyExistsException {
+        CSMT csmt = new CSMT();
+        Map<Integer, String> map = new HashMap<>();
+        Random random = new Random(4);
+        for (int i = 0; i < 10000; i++) {
+            int op = random.nextInt(3);
+            if (op == 0 || map.size() == 0) {
+                // insert
+                int key;
+                do {
+                    key = random.nextInt(Integer.MAX_VALUE);
+                } while (map.containsKey(key));
+                String val = Integer.toString(key);
+                map.put(key, val);
+                csmt.insert(key, val);
+            } else if (op == 1) {
+                // verify membership proof
+
+                int k = random.nextInt(map.size());
+                Iterator it = map.entrySet().iterator();
+                for (int j = 0; j < k + 1; j++) {
+                    it.hasNext();
+                }
+                k = (int) ((Map.Entry)it.next()).getKey();
+                getProofAndCheck(csmt, k);
+            } else if (op == 2) {
+                // verify non membership proof
+                int key;
+                do {
+                    key = random.nextInt(Integer.MAX_VALUE);
+                } while (map.containsKey(key));
+                getProofAndCheck(csmt, key);
+            }
+        }
+    }
+
     public static void main(String[] args) throws KeyExistsException {
-        test1();
+        test3();
     }
 }
