@@ -61,7 +61,7 @@ public class Main {
         csmt.printTree();
     }
 
-    public static void main(String[] args) throws Exception { // todo: handle exception
+    public static void main(String[] args) throws KeyExistsException {
         test1();
     }
 }
