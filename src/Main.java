@@ -1,22 +1,22 @@
 import java.util.*;
 
-import static java.lang.System.exit;
-
 public class Main {
 
-    private static void getProofAndCheck(CSMT csmt, int k) {
-        System.out.println("Test " + k);
+    private static boolean getProofAndCheck(CSMT csmt, int k) {
+        //System.out.println("Test " + k);
         String data = csmt.getData(k);
-        System.out.println("data == " + data);
+        //System.out.println("data == " + data);
         ArrayList<Proof> proofs = csmt.getProof(k);
         if (proofs.size() != 1 && proofs.size() != 2) {
             throw new RuntimeException("Unexpected proof format");
         }
         if (proofs.size() == 1) {
             if (CSMT.verifyMembershipProof(csmt.getRootHash(), k, data, proofs.get(0))) {
-                System.out.println("Correct membership proof");
+                //System.out.println("Correct membership proof");
+                return true;
             } else {
-                System.out.println("Incorrect membership proof");
+                //System.out.println("Incorrect membership proof");
+                return false;
             }
         } else {
             Proof proof1 = proofs.get(0);
@@ -30,12 +30,14 @@ public class Main {
                 e.printStackTrace();
             }
             if (CSMT.verifyNonMembershipProof(csmt.getRootHash(), k, data1, data2, proofs)) {
-                System.out.println("Correct non membership proof");
+                //System.out.println("Correct non membership proof");
+                return true;
             } else {
-                System.out.println("Incorrect non membership proof");
+                //System.out.println("Incorrect non membership proof");
+                return false;
             }
         }
-        System.out.println("------------------------");
+        //System.out.println("------------------------");
     }
 
     private static void test1() throws KeyExistsException {
@@ -82,14 +84,18 @@ public class Main {
                     it.hasNext();
                 }
                 k = (int) ((Map.Entry)it.next()).getKey();
-                getProofAndCheck(csmt, k);
+                if (!getProofAndCheck(csmt, k)) {
+                    System.out.println("FAILED");
+                }
             } else if (op == 2) {
                 // verify non membership proof
                 int key;
                 do {
                     key = random.nextInt(Integer.MAX_VALUE);
                 } while (map.containsKey(key));
-                getProofAndCheck(csmt, key);
+                if (!getProofAndCheck(csmt, key)) {
+                    System.out.println("FAILED");
+                }
             }
         }
     }
