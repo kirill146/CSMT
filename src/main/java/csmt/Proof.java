@@ -18,4 +18,8 @@ public class Proof {
     public ArrayList<ProofItem> getProof() {
         return proof;
     }
+
+    public void setKey(int key) {
+        this.key = key;
+    }
 }

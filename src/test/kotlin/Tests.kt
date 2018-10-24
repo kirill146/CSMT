@@ -121,6 +121,8 @@ class Tests : TestCase() {
         }
     }
 
+
+
     @Test
     fun testCorrectMembershipProof() {
         repeat(100) { _ ->
@@ -154,6 +156,31 @@ class Tests : TestCase() {
                         ))
                     }
                 }
+            }
+        }
+    }
+
+    @Test
+    fun testIncorrectMembershipProof() {
+        repeat(100) { _ ->
+            val inserts = GenInserts(500)
+
+            val tree = CSMT()
+            inserts.forEach { tree.insert(it) }
+
+            inserts.forEach {
+                val fakeProof = tree.getProof(it)
+                var anyOtherIt = 1
+                while (anyOtherIt == it || anyOtherIt !in inserts) {
+                    anyOtherIt = rand()
+                }
+                fakeProof[0].key = anyOtherIt // fakeness
+                assertFalse(CSMT.verifyMembershipProof(
+                        tree.rootHash,
+                        anyOtherIt,
+                        tree.getData(anyOtherIt),
+                        fakeProof[0]
+                ))
             }
         }
     }
