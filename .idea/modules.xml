@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/CSMT.iml" filepath="$PROJECT_DIR$/CSMT.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/cryp.iml" filepath="$PROJECT_DIR$/.idea/modules/cryp.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/cryp_main.iml" filepath="$PROJECT_DIR$/.idea/modules/cryp_main.iml" group="cryp" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/cryp_test.iml" filepath="$PROJECT_DIR$/.idea/modules/cryp_test.iml" group="cryp" />
     </modules>
   </component>
 </project>

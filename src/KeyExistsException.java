@@ -1,2 +1,0 @@
-class KeyExistsException extends Exception {
-}
