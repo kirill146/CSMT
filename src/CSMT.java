@@ -9,7 +9,7 @@ public class CSMT {
     private NodeBase root;
 
     private static int log2(int n) {
-        return n == 0 ? 0 : 31 - Integer.numberOfLeadingZeros(n);
+        return n == 0 ? -1 : 31 - Integer.numberOfLeadingZeros(n);
     }
 
     private static int distance(int x, int y) {
@@ -17,6 +17,7 @@ public class CSMT {
     }
 
     public void insert(int key, String val) throws KeyExistsException {
+        //System.out.println("csmt.insert(" + key + ", \"" + val + "\");");
         root = insert(root, key, val);
     }
 
@@ -319,6 +320,7 @@ public class CSMT {
     }
 
     public String getData(int k) {
+        //System.out.println("csmt.get(" + k + ");");
         return getData(root, k);
     }
 
@@ -336,6 +338,9 @@ public class CSMT {
 
         if (lDist == rDist) {
             return null; // Key does not exists
+            //return root.getLeft().getKey() == k ? getData(root.getLeft(), k) :
+            //        root.getRight().getKey() == k ? getData(root.getRight(), k) :
+            //                null;
         }
         if (lDist < rDist) {
             return getData(root.getLeft(), k);

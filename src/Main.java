@@ -100,7 +100,32 @@ public class Main {
         }
     }
 
+    private static void test4() throws KeyExistsException {
+        Random random = new Random(400);
+        CSMT csmt = new CSMT();
+        Set<Integer> set = new HashSet<>();
+        for (int i = 0; i < 50000; i++) {
+            set.add(random.nextInt());
+        }
+        for (Integer it : set) {
+            csmt.insert(it, it.toString());
+        }
+        for (Integer it : set) {
+            if (!csmt.getData(it).equals(it.toString())) {
+                System.out.println("FAILED");
+            }
+        }
+    }
+
+    private static void test5() throws KeyExistsException {
+        CSMT csmt = new CSMT();
+        csmt.insert(834, "834");
+        csmt.insert(835, "835");
+        csmt.printTree();
+        System.out.println(csmt.getData(834));
+    }
+
     public static void main(String[] args) throws KeyExistsException {
-        test3();
+        test5();
     }
 }
